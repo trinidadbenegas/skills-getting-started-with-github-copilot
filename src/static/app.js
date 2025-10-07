@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <div class="participants-section">
               <strong>Participants:</strong>
               <ul class="participants-list">
-                ${details.participants.map(p => `<li>${p}</li>`).join("")}
+                ${details.participants.map(p => `<li>${p} <span class="delete-icon" title="Eliminar" data-activity="${name}" data-participant="${p}">&#128465;</span></li>`).join("")}
               </ul>
             </div>
           `;
@@ -49,6 +49,25 @@ document.addEventListener("DOMContentLoaded", () => {
         `;
 
         activitiesList.appendChild(activityCard);
+        // Agregar manejador para íconos de eliminar
+        activityCard.querySelectorAll('.delete-icon').forEach(icon => {
+          icon.addEventListener('click', async (e) => {
+            const activityName = icon.getAttribute('data-activity');
+            const participantEmail = icon.getAttribute('data-participant');
+            try {
+              const response = await fetch(`/activities/${encodeURIComponent(activityName)}/unregister?email=${encodeURIComponent(participantEmail)}`, {
+                method: 'DELETE',
+              });
+              if (response.ok) {
+                fetchActivities(); // Recargar actividades
+              } else {
+                alert('No se pudo eliminar el participante.');
+              }
+            } catch (err) {
+              alert('Error al eliminar participante.');
+            }
+          });
+        });
 
         // Add option to select dropdown
         const option = document.createElement("option");
@@ -80,9 +99,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const result = await response.json();
 
       if (response.ok) {
-        messageDiv.textContent = result.message;
-        messageDiv.className = "success";
-        signupForm.reset();
+  messageDiv.textContent = result.message;
+  messageDiv.className = "success";
+  signupForm.reset();
+  fetchActivities(); // Actualizar actividades tras registro
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
         messageDiv.className = "error";
